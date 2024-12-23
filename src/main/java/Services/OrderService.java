@@ -148,5 +148,29 @@ public class OrderService {
         }
         return orderDetail;
     }
+
+    public List<Map<String, Object>> getByUserId(String userId) {
+        String sql = "SELECT * FROM `order` WHERE userId = ?";
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, userId);
+            ResultSet rs = stmt.executeQuery();
+            List<Map<String, Object>> orderList = new ArrayList<>();
+            while (rs.next()) {
+                Map<String, Object> order = new HashMap<>();
+                order.put("serialNumber", rs.getString("serialNumber"));
+                order.put("consignee", rs.getString("consignee"));
+                order.put("consigneeAddress", rs.getString("consigneeAddress"));
+                order.put("phone", rs.getString("phone"));
+                order.put("amount", rs.getDouble("amount"));
+                order.put("state", rs.getString("state"));
+                orderList.add(order);
+            }
+            return orderList;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
 

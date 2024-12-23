@@ -298,7 +298,8 @@ public class ShoppingMall {
         System.out.println("1. 查看所有产品");
         System.out.println("2. 查看购物车");
         System.out.println("3. 结账");
-        System.out.println("4. 注销");
+        System.out.println("4. 查看历史订单");
+        System.out.println("5. 注销");
         System.out.print("请选择: ");
 
         int choice = scanner.nextInt();
@@ -315,10 +316,43 @@ public class ShoppingMall {
                 checkout();
                 break;
             case 4:
+                showHistoryOrders();
+                break;
+            case 5:
                 logout();
                 break;
             default:
                 System.out.println("无效选择!");
+        }
+    }
+
+    private static void showHistoryOrders(){
+        OrderService orderService = new OrderService();
+        List<Map<String, Object>> orderList = orderService.getByUserId(currentUser.getId());
+
+        if (orderList.isEmpty()) {
+            System.out.println("没有历史订单。");
+            return;
+        }
+
+        System.out.println("\n=== 历史订单 ===");
+        System.out.printf("%-20s %-20s %-20s %-20s %-20s\n",
+                "订单号", "收货人", "收货地址", "电话", "总金额");
+        System.out.println("=".repeat(120));
+
+        for (Map<String, Object> order : orderList) {
+            // 打印订单信息
+            System.out.printf("%-20s %-20s %-20s %-20s %-20.2f\n",
+                    order.get("serialNumber"),
+                    order.get("consignee"), order.get("consigneeAddress"),
+                    order.get("phone"), order.get("amount"));
+        }
+
+        System.out.print("\n输入订单号以查看订单详情 (或输入0返回): ");
+        String serialNumber = scanner.nextLine();
+
+        if (!serialNumber.equals("0")) {
+            viewOrderDetail(serialNumber);
         }
     }
 
