@@ -3,6 +3,7 @@ package Services;
 import Models.Goods;
 import Models.User;
 import Utils.DatabaseUtil;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -17,7 +18,7 @@ public class OrderService {
         String orderId = UUID.randomUUID().toString().replace("-", "");
         String serialNumber = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()) +
                 "-" + System.currentTimeMillis() + "-" +
-                (int)(Math.random() * 1000);
+                (int) (Math.random() * 1000);
         double totalAmount = 0;
 
         Connection conn = null;
@@ -74,5 +75,17 @@ public class OrderService {
         }
         return null;
     }
+
+    public void clearCart(String userId) {
+        String sql = "DELETE FROM cart WHERE user_id = ?";
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, userId);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
 

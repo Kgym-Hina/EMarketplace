@@ -11,7 +11,6 @@ import java.util.Scanner;
 
 public class ShoppingMall {
     private static User currentUser = null;
-    private static final Map<String, Integer> cart = new HashMap<>();
     private static final Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
@@ -90,6 +89,7 @@ public class ShoppingMall {
         }
     }
 
+    // src/main/java/ShoppingMall.java
     private static void showProducts() {
         GoodsService goodsService = new GoodsService();
         int page = 1;
@@ -138,13 +138,16 @@ public class ShoppingMall {
                     int quantity = scanner.nextInt();
                     scanner.nextLine(); // 消耗换行符
 
-                    cart.put(input, cart.getOrDefault(input, 0) + quantity);
+                    goodsService.addToCart(currentUser.getId(), input, quantity);
                     System.out.println("产品已添加到购物车!");
             }
         }
     }
 
     private static void viewCart() {
+        GoodsService goodsService = new GoodsService();
+        Map<String, Integer> cart = goodsService.getCart(currentUser.getId());
+
         if (cart.isEmpty()) {
             System.out.println("\n您的购物车是空的!");
             return;
@@ -156,7 +159,6 @@ public class ShoppingMall {
         System.out.println("=".repeat(60));
 
         double total = 0;
-        GoodsService goodsService = new GoodsService();
 
         for (Map.Entry<String, Integer> entry : cart.entrySet()) {
             Goods goods = goodsService.getGoodsById(entry.getKey());
@@ -174,6 +176,9 @@ public class ShoppingMall {
     }
 
     private static void checkout() {
+        GoodsService goodsService = new GoodsService();
+        Map<String, Integer> cart = goodsService.getCart(currentUser.getId());
+
         if (cart.isEmpty()) {
             System.out.println("\n您的购物车是空的!");
             return;
@@ -188,13 +193,12 @@ public class ShoppingMall {
         String phone = scanner.nextLine();
 
         OrderService orderService = new OrderService();
-        String serialNumber = orderService.createOrder(currentUser, cart, consignee,
-                address, phone);
+        String serialNumber = orderService.createOrder(currentUser, cart, consignee, address, phone);
 
         if (serialNumber != null) {
             System.out.println("\n订单创建成功!");
             System.out.println("订单号: " + serialNumber);
-            cart.clear();
+            orderService.clearCart(currentUser.getId());
         } else {
             System.out.println("\n订单创建失败。请重试。");
         }
@@ -202,7 +206,6 @@ public class ShoppingMall {
 
     private static void logout() {
         currentUser = null;
-        cart.clear();
         System.out.println("\n注销成功!");
     }
 }

@@ -4,8 +4,7 @@ import Models.Goods;
 import Utils.DatabaseUtil;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class GoodsService {
     public List<Goods> getAllGoods(int page, int pageSize) {
@@ -63,5 +62,37 @@ public class GoodsService {
             e.printStackTrace();
         }
         return false;
+    }
+
+    public void addToCart(String userId, String goodId, int quantity) {
+        String sql = "INSERT INTO cart (id, user_id, good_id, quantity) VALUES (?, ?, ?, ?) " +
+                "ON DUPLICATE KEY UPDATE quantity = quantity + ?";
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, UUID.randomUUID().toString().replace("-", ""));
+            stmt.setString(2, userId);
+            stmt.setString(3, goodId);
+            stmt.setInt(4, quantity);
+            stmt.setInt(5, quantity);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Map<String, Integer> getCart(String userId) {
+        Map<String, Integer> cart = new HashMap<>();
+        String sql = "SELECT good_id, quantity FROM cart WHERE user_id = ?";
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, userId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                cart.put(rs.getString("good_id"), rs.getInt("quantity"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return cart;
     }
 }
