@@ -6,11 +6,10 @@ import Utils.DatabaseUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class OrderService {
     public String createOrder(User user, Map<String, Integer> cart, String consignee,
@@ -87,5 +86,67 @@ public class OrderService {
         }
     }
 
+    public List<Map<String, Object>> getAllOrders() {
+        List<Map<String, Object>> orderList = new ArrayList<>();
+        String sql = "SELECT o.serialNumber, u.username, o.consignee, o.consigneeAddress, o.phone, o.amount " +
+                "FROM `order` o JOIN `user` u ON o.userId = u.id WHERE o.isDel = '0'";
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> order = new HashMap<>();
+                order.put("serialNumber", rs.getString("serialNumber"));
+                order.put("username", rs.getString("username"));
+                order.put("consignee", rs.getString("consignee"));
+                order.put("consigneeAddress", rs.getString("consigneeAddress"));
+                order.put("phone", rs.getString("phone"));
+                order.put("amount", rs.getDouble("amount"));
+                orderList.add(order);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return orderList;
+    }
+
+    public Map<String, Object> getOrderDetail(String serialNumber) {
+        Map<String, Object> orderDetail = new HashMap<>();
+        String orderSql = "SELECT o.serialNumber, u.username, o.consignee, o.consigneeAddress, o.phone, o.amount " +
+                "FROM `order` o JOIN `user` u ON o.userId = u.id WHERE o.serialNumber = ? AND o.isDel = '0'";
+        String detailSql = "SELECT od.goodsId, od.goodTitle, od.goodNum, od.price " +
+                "FROM order_detail od WHERE od.orderId = (SELECT id FROM `order` WHERE serialNumber = ?)";
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement orderStmt = conn.prepareStatement(orderSql);
+             PreparedStatement detailStmt = conn.prepareStatement(detailSql)) {
+            orderStmt.setString(1, serialNumber);
+            try (ResultSet rs = orderStmt.executeQuery()) {
+                if (rs.next()) {
+                    orderDetail.put("serialNumber", rs.getString("serialNumber"));
+                    orderDetail.put("username", rs.getString("username"));
+                    orderDetail.put("consignee", rs.getString("consignee"));
+                    orderDetail.put("consigneeAddress", rs.getString("consigneeAddress"));
+                    orderDetail.put("phone", rs.getString("phone"));
+                    orderDetail.put("amount", rs.getDouble("amount"));
+                }
+            }
+
+            detailStmt.setString(1, serialNumber);
+            try (ResultSet rs = detailStmt.executeQuery()) {
+                List<Map<String, Object>> orderItems = new ArrayList<>();
+                while (rs.next()) {
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("goodsId", rs.getString("goodsId"));
+                    item.put("goodTitle", rs.getString("goodTitle"));
+                    item.put("goodNum", rs.getInt("goodNum"));
+                    item.put("price", rs.getDouble("price"));
+                    orderItems.add(item);
+                }
+                orderDetail.put("items", orderItems);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return orderDetail;
+    }
 }
 

@@ -95,4 +95,51 @@ public class GoodsService {
         }
         return cart;
     }
+
+    public boolean deleteGoods(String id) {
+        String sql = "UPDATE goods SET isDel = '1' WHERE id = ?";
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, id);
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean updateGoods(String id, String name, double price, int number, String brand) {
+    String sql = "UPDATE goods SET name = ?, price = ?, number = ?, brand = ? WHERE id = ? AND isDel = '0'";
+    try (Connection conn = DatabaseUtil.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+        stmt.setString(1, name);
+        stmt.setDouble(2, price);
+        stmt.setInt(3, number);
+        stmt.setString(4, brand);
+        stmt.setString(5, id);
+        int rowsAffected = stmt.executeUpdate();
+        return rowsAffected > 0;
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return false;
+}
+
+public boolean addGoods(String name, double price, int number, String brand) {
+    String sql = "INSERT INTO goods (id, name, price, number, brand, isDel) VALUES (?, ?, ?, ?, ?, '0')";
+    try (Connection conn = DatabaseUtil.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+        stmt.setString(1, UUID.randomUUID().toString().replace("-", ""));
+        stmt.setString(2, name);
+        stmt.setDouble(3, price);
+        stmt.setInt(4, number);
+        stmt.setString(5, brand);
+        int rowsAffected = stmt.executeUpdate();
+        return rowsAffected > 0;
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return false;
+}
 }
