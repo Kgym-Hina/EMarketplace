@@ -11,8 +11,8 @@ import java.util.Scanner;
 
 public class ShoppingMall {
     private static User currentUser = null;
-    private static Map<String, Integer> cart = new HashMap<>();
-    private static Scanner scanner = new Scanner(System.in);
+    private static final Map<String, Integer> cart = new HashMap<>();
+    private static final Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
         while (true) {
@@ -92,29 +92,55 @@ public class ShoppingMall {
 
     private static void showProducts() {
         GoodsService goodsService = new GoodsService();
-        List<Goods> goodsList = goodsService.getAllGoods();
+        int page = 1;
+        int pageSize = 5;
+        boolean exit = false;
 
-        System.out.println("\n=== 产品列表 ===");
-        System.out.printf("%-20s %-30s %-10s %-10s %-20s\n",
-                "ID", "名称", "价格", "库存", "品牌");
-        System.out.println("=".repeat(90));
+        while (!exit) {
+            List<Goods> goodsList = goodsService.getAllGoods(page, pageSize);
 
-        for (Goods goods : goodsList) {
-            System.out.printf("%-20s %-30s %-10.2f %-10d %-20s\n",
-                    goods.getId(), goods.getName(), goods.getPrice(),
-                    goods.getNumber(), goods.getBrand());
-        }
+            if (goodsList.isEmpty()) {
+                System.out.println("没有更多产品了。");
+                break;
+            }
 
-        System.out.print("\n输入产品ID以添加到购物车 (或输入0返回): ");
-        String id = scanner.nextLine();
+            System.out.println("\n=== 产品列表 (第 " + page + " 页) ===");
+            System.out.printf("%-20s %-30s %-10s %-10s %-20s\n",
+                    "ID", "名称", "价格", "库存", "品牌");
+            System.out.println("=".repeat(90));
 
-        if (!id.equals("0")) {
-            System.out.print("输入数量: ");
-            int quantity = scanner.nextInt();
-            scanner.nextLine(); // 消耗换行符
+            for (Goods goods : goodsList) {
+                System.out.printf("%-20s %-30s %-10.2f %-10d %-20s\n",
+                        goods.getId(), goods.getName(), goods.getPrice(),
+                        goods.getNumber(), goods.getBrand());
+            }
 
-            cart.put(id, cart.getOrDefault(id, 0) + quantity);
-            System.out.println("产品已添加到购物车!");
+            System.out.print("\n输入产品ID以添加到购物车 (或输入0返回, n下一页, p上一页): ");
+            String input = scanner.nextLine();
+
+            switch (input) {
+                case "0":
+                    exit = true;
+                    break;
+                case "n":
+                    page++;
+                    break;
+                case "p":
+                    if (page > 1) page--;
+                    break;
+                default:
+                    if (!goodsService.isGoodsExist(input)) {
+                        System.out.println("产品不存在!");
+                        break;
+                    }
+
+                    System.out.print("输入数量: ");
+                    int quantity = scanner.nextInt();
+                    scanner.nextLine(); // 消耗换行符
+
+                    cart.put(input, cart.getOrDefault(input, 0) + quantity);
+                    System.out.println("产品已添加到购物车!");
+            }
         }
     }
 
